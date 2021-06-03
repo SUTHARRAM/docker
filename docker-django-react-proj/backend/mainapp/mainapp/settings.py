@@ -20,16 +20,67 @@ import os
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '!#$cq6glxfpm-a#*_v(!0-k&ij8r0vc-5^yr%n@8elyzu20gw!'
+#################################################################
+    ##  Get Django environment set by docker (i.e either development or production), or else set it to local ##
+#################################################################
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+try:
+    DJANGO_ENV = os.environ.get("DJANGO_ENV")
+except:
+    DJANGO_ENV = 'local'
 
-ALLOWED_HOSTS = []
+#################################################################
+    ##  If Django environement has been set by docker it would be either development or production otherwise it would be undefined or local ##
+#################################################################
+
+if DJANGO_ENV == 'development' or DJANGO_ENV == 'production': 
+
+    try: 
+        SECRET_KEY = os.environ.get("SECRET_KEY")
+    except:
+        SECRET_KEY = 'localsecret'
+
+    try: 
+        DBUG = int(os.environ.get("DEBUG", default=0))
+    except: 
+        DEBUG = False
+
+    try: 
+        ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
+    except: 
+        ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
+
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"), 
+            "NAME": os.environ.get("DB_DATABASE", os.path.join(BASE_DIR, "db.sqlite3")), 
+            "USER": os.environ.get("DB_USER", "ram"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", "ram"), 
+            "HOST": os.environ.get("DB_HOST", "localhost"), 
+            "PORT": os.environ.get("DB_PORT", "5432"), 
+        }
+    } 
+else: 
+    SECRET_KEY = '!#$cq6glxfpm-a#*_v(!0-k&ij8r0vc-5^yr%n@8elyzu20gw!'
+    DEBUG = True
+    ALLOWED_HOSTS=['127.0.0.1', '0.0.0.0', 'localhost']
+    DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2', 
+        'NAME': 'djangodb', 
+        'USER': 'ram', 
+        'PASSWORD': 'ram', 
+        'HOST': '127.0.0.1', 
+        'PORT': '5432', 
+        }
+    }
+
+
+
+
+
+
 
 
 # Application definition
@@ -94,16 +145,7 @@ WSGI_APPLICATION = 'mainapp.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2', 
-        'NAME': 'djangodb', 
-        'USER': 'ram', 
-        'PASSWORD': 'ram', 
-        'HOST': '127.0.0.1', 
-        'PORT': '5432', 
-    }
-}
+
 
 
 # Password validation
@@ -142,6 +184,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 
 CORS_ORIGIN_ALLOW_ALL = True
